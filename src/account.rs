@@ -72,7 +72,7 @@ pub struct ExternalAuthorization {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auth_users: Option<BTreeSet<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub allow: Option<BTreeSet<String>>,
+    pub allowed_accounts: Option<BTreeSet<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub xkey: Option<String>,
 }
