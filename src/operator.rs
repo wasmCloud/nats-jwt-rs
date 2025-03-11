@@ -5,12 +5,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone, Builder)]
 #[builder(setter(into), default)]
 pub struct Operator {
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub signing_keys: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signing_keys: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_server_url: Option<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub operator_service_urls: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operator_service_urls: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub system_account: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assert_server_version: Option<String>,
@@ -28,10 +29,10 @@ impl Default for Operator {
                 claim_type: ClaimType::Operator,
                 ..Default::default()
             },
-            signing_keys: Vec::new(),
+            signing_keys: None,
             account_server_url: None,
             strict_signing_key_usage: None,
-            operator_service_urls: Vec::new(),
+            operator_service_urls: None,
             system_account: None,
             assert_server_version: None,
         }
