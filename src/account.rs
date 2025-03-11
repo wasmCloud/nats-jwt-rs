@@ -104,7 +104,7 @@ pub struct Account {
     pub default_permissions: Option<Permissions>,
     #[serde(flatten, skip_serializing_if = "BTreeMap::is_empty")]
     pub mappings: Mapping,
-    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization: Option<ExternalAuthorization>,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub trace: Option<MsgTrace>,
