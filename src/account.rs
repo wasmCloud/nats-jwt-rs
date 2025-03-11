@@ -108,6 +108,7 @@ pub struct Account {
     pub authorization: Option<ExternalAuthorization>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trace: Option<MsgTrace>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub info: Option<Info>,
     #[serde(flatten)]
     pub generic_fields: GenericFields,
