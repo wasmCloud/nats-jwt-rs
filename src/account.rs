@@ -79,7 +79,7 @@ pub struct ExternalAuthorization {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MsgTrace {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "dest", skip_serializing_if = "Option::is_none")]
     pub destination: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sampling: Option<u64>,
@@ -106,7 +106,7 @@ pub struct Account {
     pub mappings: Mapping,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization: Option<ExternalAuthorization>,
-    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub trace: Option<MsgTrace>,
     pub info: Option<Info>,
     #[serde(flatten)]
