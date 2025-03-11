@@ -180,7 +180,7 @@ pub struct Permission {
 pub struct ResponsePermission {
     #[serde(rename = "max")]
     pub max_messages: i64,
-    #[serde(skip_serializing_if = "Duration::is_zero")]
+    #[serde(with = "go_duration_format", skip_serializing_if = "Duration::is_zero")]
     pub ttl: Duration,
 }
 
@@ -276,5 +276,28 @@ impl<'de> Deserialize<'de> for SamplingRate {
             Rates::String(_s) => Ok(SamplingRate::Headers),
             Rates::U32(u) => Ok(SamplingRate::Percentage(u)),
         }
+    }
+}
+
+mod go_duration_format {
+    use std::time::Duration;
+
+    use serde::{self, Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u128(duration.as_nanos())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let nanos =
+            u64::try_from(u128::deserialize(deserializer)?).map_err(serde::de::Error::custom)?;
+        let duration = Duration::from_nanos(nanos);
+        Ok(duration)
     }
 }
