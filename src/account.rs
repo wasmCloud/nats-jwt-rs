@@ -1,5 +1,8 @@
 use crate::{
-    types::{Export, GenericFields, Import, Info, Limits, NatsLimits, Permissions, SigningKey},
+    types::{
+        Export, GenericFields, Import, Info, Limits, NatsLimits, Permission, Permissions,
+        SigningKey, NO_LIMIT,
+    },
     Claim, ClaimType, Claims,
 };
 use derive_builder::Builder;
@@ -7,7 +10,7 @@ use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OperatorLimits {
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub nats: Option<NatsLimits>,
@@ -17,6 +20,17 @@ pub struct OperatorLimits {
     pub jetstream: Option<JetStreamLimits>,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub tiered_limits: Option<BTreeMap<String, Limits>>,
+}
+
+impl Default for OperatorLimits {
+    fn default() -> Self {
+        Self {
+            nats: Some(NatsLimits::default()),
+            account: Some(AccountLimits::default()),
+            jetstream: None,
+            tiered_limits: None,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -40,7 +54,7 @@ pub struct JetStreamLimits {
     pub max_bytes_required: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountLimits {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub imports: Option<i64>,
@@ -54,6 +68,19 @@ pub struct AccountLimits {
     pub conn: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub leaf: Option<i64>,
+}
+
+impl Default for AccountLimits {
+    fn default() -> Self {
+        Self {
+            imports: Some(NO_LIMIT),
+            exports: Some(NO_LIMIT),
+            wildcard_exports: Some(true),
+            disallow_bearer: None,
+            conn: Some(NO_LIMIT),
+            leaf: Some(NO_LIMIT),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -121,13 +148,17 @@ impl Default for Account {
                 claim_type: ClaimType::Account,
                 ..Default::default()
             },
+            default_permissions: Some(Permissions {
+                publish: Permission::default(),
+                subscribe: Permission::default(),
+                resp: None,
+            }),
+            limits: Some(OperatorLimits::default()),
             info: None,
-            default_permissions: None,
             imports: None,
             exports: None,
             signing_keys: None,
             revocations: None,
-            limits: None,
             mappings: None,
             authorization: None,
             trace: None,

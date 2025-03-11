@@ -5,6 +5,8 @@ use std::time::Duration;
 
 use crate::{user::UserPermissionLimits, ClaimType};
 
+pub const NO_LIMIT: i64 = -1;
+
 #[derive(Debug, Serialize, Deserialize, Clone, Hash, PartialEq, Eq)]
 pub struct NatsLimits {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -13,6 +15,16 @@ pub struct NatsLimits {
     pub data: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payload: Option<i64>,
+}
+
+impl Default for NatsLimits {
+    fn default() -> Self {
+        Self {
+            subs: Some(NO_LIMIT),
+            data: Some(NO_LIMIT),
+            payload: Some(NO_LIMIT),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Hash, PartialEq, Eq)]
