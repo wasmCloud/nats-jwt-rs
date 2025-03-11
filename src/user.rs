@@ -1,4 +1,4 @@
-use crate::types::{GenericFields, Limits, Permissions};
+use crate::types::{GenericFields, Limits, NatsLimits, Permissions};
 use crate::{Claim, ClaimType, Claims};
 use serde::{Deserialize, Serialize};
 
@@ -39,7 +39,7 @@ impl User {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Hash, Eq, PartialEq)]
 pub struct UserPermissionLimits {
     #[serde(flatten)]
     pub permissions: Permissions,
@@ -49,4 +49,18 @@ pub struct UserPermissionLimits {
     pub bearer_token: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allowed_connection_types: Option<Vec<String>>,
+}
+
+impl Default for UserPermissionLimits {
+    fn default() -> Self {
+        Self {
+            permissions: Permissions::default(),
+            limits: Some(Limits {
+                nats_limits: Some(NatsLimits::default()),
+                user_limits: None,
+            }),
+            bearer_token: None,
+            allowed_connection_types: None,
+        }
+    }
 }

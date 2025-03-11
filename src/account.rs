@@ -1,5 +1,8 @@
 use crate::{
-    types::{Export, GenericFields, Import, Info, Limits, NatsLimits, Permissions, SigningKey},
+    types::{
+        Export, GenericFields, Import, Info, Limits, NatsLimits, Permission, Permissions,
+        SigningKey, NO_LIMIT,
+    },
     Claim, ClaimType, Claims,
 };
 use derive_builder::Builder;
@@ -7,7 +10,7 @@ use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OperatorLimits {
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub nats: Option<NatsLimits>,
@@ -15,8 +18,19 @@ pub struct OperatorLimits {
     pub account: Option<AccountLimits>,
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
     pub jetstream: Option<JetStreamLimits>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub tiered_limits: BTreeMap<String, Limits>,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    pub tiered_limits: Option<BTreeMap<String, Limits>>,
+}
+
+impl Default for OperatorLimits {
+    fn default() -> Self {
+        Self {
+            nats: Some(NatsLimits::default()),
+            account: Some(AccountLimits::default()),
+            jetstream: None,
+            tiered_limits: None,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -40,7 +54,7 @@ pub struct JetStreamLimits {
     pub max_bytes_required: Option<bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountLimits {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub imports: Option<i64>,
@@ -54,6 +68,19 @@ pub struct AccountLimits {
     pub conn: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub leaf: Option<i64>,
+}
+
+impl Default for AccountLimits {
+    fn default() -> Self {
+        Self {
+            imports: Some(NO_LIMIT),
+            exports: Some(NO_LIMIT),
+            wildcard_exports: Some(true),
+            disallow_bearer: None,
+            conn: Some(NO_LIMIT),
+            leaf: Some(NO_LIMIT),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -79,7 +106,7 @@ pub struct ExternalAuthorization {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MsgTrace {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "dest", skip_serializing_if = "Option::is_none")]
     pub destination: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sampling: Option<u64>,
@@ -88,26 +115,27 @@ pub struct MsgTrace {
 #[derive(Debug, Serialize, Deserialize, Clone, Builder)]
 #[builder(setter(into), default)]
 pub struct Account {
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub imports: Vec<Import>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub exports: Vec<Export>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub imports: Option<Vec<Import>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exports: Option<Vec<Export>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limits: Option<OperatorLimits>,
     //#[serde(skip_serializing_if = "BTreeMap::is_empty")]
     //pub signing_keys: BTreeMap<String, UserScope>,
-    #[serde(skip_serializing_if = "IndexSet::is_empty")]
-    pub signing_keys: IndexSet<SigningKey>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub revocations: BTreeMap<String, u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signing_keys: Option<IndexSet<SigningKey>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revocations: Option<BTreeMap<String, u64>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_permissions: Option<Permissions>,
-    #[serde(flatten, skip_serializing_if = "BTreeMap::is_empty")]
-    pub mappings: Mapping,
-    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mappings: Option<Mapping>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization: Option<ExternalAuthorization>,
-    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub trace: Option<MsgTrace>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub info: Option<Info>,
     #[serde(flatten)]
     pub generic_fields: GenericFields,
@@ -120,14 +148,18 @@ impl Default for Account {
                 claim_type: ClaimType::Account,
                 ..Default::default()
             },
+            default_permissions: Some(Permissions {
+                publish: Permission::default(),
+                subscribe: Permission::default(),
+                resp: None,
+            }),
+            limits: Some(OperatorLimits::default()),
             info: None,
-            default_permissions: None,
-            imports: Vec::new(),
-            exports: Vec::new(),
-            signing_keys: IndexSet::new(),
-            revocations: BTreeMap::new(),
-            limits: None,
-            mappings: BTreeMap::new(),
+            imports: None,
+            exports: None,
+            signing_keys: None,
+            revocations: None,
+            mappings: None,
             authorization: None,
             trace: None,
         }
