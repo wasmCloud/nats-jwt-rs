@@ -5,9 +5,10 @@ description = "A port of the NATS jwt.go package to Rust"
 readme = "README.md"
 edition = "2021"
 authors = ["The wasmCloud Team"]
-categories = ["wasm", "data-structures"]
+categories = ["wasm", "api-bindings", "network-programming"]
 license = "Apache-2.0"
 repository = "https://github.com/wasmCloud/nats-jwt"
+keywords = ["nats", "jwt", "wasmcloud", "api", "messaging"]
 
 [badges.maintenance]
 status = "actively-developed"
