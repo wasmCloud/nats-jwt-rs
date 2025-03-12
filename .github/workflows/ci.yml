@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@a54c7afa936fefeb4456b2dd8068152669aa8203 # v1
+        with:
+          components: rustfmt
+      - uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - name: cargo fmt -- --check
+        run: cargo fmt -- --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@a54c7afa936fefeb4456b2dd8068152669aa8203 # v1
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - name: cargo clippy --all-targets
+        run: cargo clippy --all-targets
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install stable
+        uses: dtolnay/rust-toolchain@a54c7afa936fefeb4456b2dd8068152669aa8203 # v1
+      - uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+      - name: cargo test
+        run: cargo test
