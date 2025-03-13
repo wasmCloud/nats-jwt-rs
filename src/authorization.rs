@@ -39,7 +39,7 @@ pub struct ClientTLS {
     verified_chains: Vec<Vec<String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct AuthRequest {
     #[serde(rename = "server_id")]
@@ -67,6 +67,12 @@ impl AuthRequest {
             request_nonce: None,
             generic_fields: GenericFields::default(),
         }
+    }
+}
+
+impl Default for AuthRequest {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

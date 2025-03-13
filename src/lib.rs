@@ -1,4 +1,10 @@
-use std::{fmt::Display, time::UNIX_EPOCH};
+use std::{
+    error::Error,
+    fmt::{self, Display},
+    result::Result as StdResult,
+    str::FromStr,
+    time::UNIX_EPOCH,
+};
 
 use anyhow::{Context, Result};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
@@ -27,21 +33,47 @@ pub struct ClaimsHeader {
     algorithm: String,
 }
 
-impl ClaimsHeader {
-    pub fn from_str(header: &str) -> Result<Self> {
-        let header: ClaimsHeader = decode_claims(header)?;
+impl FromStr for ClaimsHeader {
+    type Err = ParseClaimsHeaderError;
+
+    fn from_str(header: &str) -> StdResult<Self, Self::Err> {
+        let header: ClaimsHeader =
+            decode_claims(header).map_err(|e| ParseClaimsHeaderError::Unknown(e.to_string()))?;
         if header.header_type != HEADER_TYPE {
-            return Err(anyhow::anyhow!("unsupported type {}", header.header_type));
+            return Err(ParseClaimsHeaderError::UnsupportedType(header.header_type));
         }
         if header.algorithm != HEADER_ALGORITHM {
-            return Err(anyhow::anyhow!(
-                "unsupported algorithm {}",
-                header.algorithm
+            return Err(ParseClaimsHeaderError::UnsupportedAlgorithm(
+                header.algorithm,
             ));
         }
         Ok(header)
     }
 }
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ParseClaimsHeaderError {
+    UnsupportedAlgorithm(String),
+    UnsupportedType(String),
+    Unknown(String),
+}
+
+impl fmt::Display for ParseClaimsHeaderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ParseClaimsHeaderError::UnsupportedAlgorithm(alg) =>
+                    format!("unsupported algorithm: {alg}"),
+                ParseClaimsHeaderError::UnsupportedType(typ) => format!("unsupported type: {typ}"),
+                ParseClaimsHeaderError::Unknown(unknown) => format!("unknown error: {unknown}"),
+            }
+        )
+    }
+}
+
+impl Error for ParseClaimsHeaderError {}
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -170,7 +202,7 @@ impl<T> Jwt<T>
 where
     T: Claim + DeserializeOwned + Serialize + Clone,
 {
-    pub fn encode(&self, key: &nkeys::KeyPair) -> Result<String> {
+    pub fn encode(&self, key: &KeyPair) -> Result<String> {
         let hdr = encode_jwt_segment(&self.header)?;
         let mut c = self.payload.clone();
         c.iat = std::time::SystemTime::now()
@@ -194,7 +226,7 @@ where
         Ok(format!("{}.{}", intermediate, s))
     }
 
-    pub fn decode(token: String) -> Result<Self> {
+    pub fn decode(token: &str) -> Result<Self> {
         let parts: Vec<&str> = token.split('.').collect();
         if parts.len() != 3 {
             return Err(anyhow::anyhow!("Invalid JWT"));

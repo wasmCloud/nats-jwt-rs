@@ -45,3 +45,9 @@ impl ValidationResults {
             .any(|i| i.blocking && (!i.time_check || time_checks))
     }
 }
+
+impl Default for ValidationResults {
+    fn default() -> Self {
+        Self::new()
+    }
+}
