@@ -17,7 +17,7 @@ status = "actively-developed"
 anyhow = "1"
 base64 = "0.22"
 bytes = "1.7"
-data-encoding = "2.6"
+data-encoding = "2.9"
 derive_builder = "0.20"
 indexmap = {version = "2", features = ["serde"]}
 nkeys = {version = "0.4", features = ["xkeys"]}
